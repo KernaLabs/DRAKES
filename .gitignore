@@ -1,2 +1,42 @@
-data_and_model
+# Data and model weights
+data_and_model/
 data_and_model.zip
+DRAKES_data.zip
+DRAKES/
+
+# Experiment outputs and checkpoints
+**/reward_bp_results*/
+**/experiments*/
+**/outputs/
+**/distilled_oracle/
+*.pt
+*.ckpt
+*.pth
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+wandb/
+
+# Misc
+*.zip
+*.tar.gz
