@@ -1,0 +1,145 @@
+---
+title: "DRAKES: Fine-Tuning Discrete Diffusion Models via Reward Optimization"
+subtitle: "Wang, Uehara, He et al. (ICLR 2025)"
+format: html
+---
+
+## Overall Picture
+
+This paper addresses the problem of fine-tuning **discrete diffusion models** to maximize downstream reward functions while preserving the naturalness of generated sequences. Discrete diffusion models operate over $\mathcal{X} = \{1, 2, \ldots, N\}$ and are formulated as **continuous-time Markov chains (CTMCs)** rather than the Brownian motion underlying continuous diffusion models.
+
+### Background: Discrete Diffusion via CTMC
+
+The forward process evolves a family of distributions $j_t \in \mathbb{R}^N$ according to:
+
+$$
+\frac{dj_t}{dt} = Q(t) j_t, \quad p_0 \sim p_{\text{data}}
+$$
+
+where $Q(t) \in \mathbb{R}^{N \times N}$ is the generator (rate matrix). The authors focus on **masked diffusion models**, where tokens are progressively masked until the limiting distribution is fully masked. The time-reversal CTMC preserves marginals and has generator:
+
+$$
+\bar{Q}_{x,y}(t) = \frac{j_t(y)}{j_t(x)} Q_{y,x}(t) \quad (y \neq x)
+$$
+
+For masked diffusion specifically, the reverse generator simplifies to:
+
+$$
+\bar{Q}_{x,y}(t) = \begin{cases} \gamma \, \mathbb{E}[x_0 = y \mid x_t = \text{Mask}] & y \neq \text{Mask}, \; x_t = \text{Mask} \\ 0 & x_t \neq \text{Mask} \end{cases}
+$$
+
+For sequences of length $M$, the rate matrix factorizes: $\bar{Q}_{x,y} = \sum_i \bar{Q}^{\langle i \rangle}_{x,y}$, avoiding exponential blowup.
+
+### The RL Formulation (Section 4.1)
+
+Given a pretrained discrete diffusion model $p^{\text{pre}}(x \mid c)$ and a reward function $r : \mathcal{X} \to \mathbb{R}$, the goal is to generate sequences that are both natural (high $\log p^{\text{pre}}$) and high-reward. The key optimization problem is:
+
+$$
+\theta^\star = \arg\max_{\theta \in \Theta} \; \underbrace{\mathbb{E}_{x_{0:T} \sim P^\theta}[r(x_T)]}_{\text{Reward term}} - \alpha \underbrace{\mathbb{E}_{x_{0:T} \sim P^\theta}\left[\int_0^T \sum_{y \neq x_t} \left( Q^{\theta^{\text{pre}}}_{x_t, y}(t) - Q^\theta_{x_t, y}(t) + Q^\theta_{x_t, y}(t) \log \frac{Q^\theta_{x_t, y}(t)}{Q^{\theta^{\text{pre}}}_{x_t, y}(t)} \right) dt \right]}_{\text{KL term}}
+$$
+
+The first term drives reward maximization; the second is the KL divergence between the fine-tuned and pretrained CTMC path measures, regularizing to prevent over-optimization. The parameter $\alpha$ controls regularization strength.
+
+**Theorem 1** (Fine-Tuned Distribution): When the generator class is fully nonparametric, the optimal distribution at time $T$ is proportional to:
+
+$$
+p^\star(x) \propto \exp(r(x) / \alpha) \, p^{\text{pre}}(x)
+$$
+
+This is the discrete-diffusion analog of the RLHF objective in autoregressive LLMs, but notably $p^{\text{pre}}(\cdot)$ cannot be explicitly computed for diffusion models (unlike autoregressive models).
+
+---
+
+## Section 4.2: Direct Reward Backpropagation with Gumbel Softmax Trick (DRAKES)
+
+*The following is transcribed verbatim from the paper (pages 5–6).*
+
+Based on the key formulation presented in Section 4.1, we introduce our proposed method (Algorithm 1 and Figure 1), which is designed to solve the RL problem (5). The core approach involves iteratively (a) sampling from $x_{0:T} \sim P^\theta$ and (b) updating $\theta$ by approximating the objective function (5) with its empirical counterpart and adding its gradient with respect to $\theta$ into the current $\theta$. Importantly, for step (b) to be valid, step (a) must retain the gradients from $\theta$. After explaining the representation of $x_t$, we will provide details on each step.
+
+**Representation.** To represent $x \in \{1, \cdots, N\}$, we often use the $N$-dimensional one-hot encoding representation within $\mathbb{R}^N$ interchangeably. From this perspective, while the original generator corresponds to a map $\mathcal{X} \times \mathcal{X} \to \mathbb{R}$, we can also regard it as an extended mapping: $\mathbb{R}^N \times \mathbb{R}^N \to \mathbb{R}$. We will use this extended mapping when we consider our algorithm later.
+
+**Stage 1: Data collection (Step 2-9)** We aim to sample from the distribution induced by the generator $Q^\theta$. In the standard discretization of CTMC, for $(y, x) \in \mathcal{X} \times \mathcal{X}$, at time $t$, we use
+
+$$
+p(x_{t+\Delta t} = y \mid x_t = x) = \mathbb{I}(x = y) + Q^\theta_{x,y}(t)(\Delta t).
+$$
+
+Thus, by defining $\pi_t = [Q^\theta_{x,1}(t)(\Delta t), \cdots, (1 + Q^\theta_{x,x}(t))\Delta t \cdots, Q^\theta_{x,N}(t)(\Delta t)]$, we sample $x_{t+\Delta t} \sim \text{Cat}(\pi_t)$, where $\text{Cat}(\cdot)$ denotes the categorical distribution.
+
+However, this procedure is not differentiable with respect to $\theta$, which limits its applicability for optimization. To address this, we first recognize that sampling from the categorical distribution can be reduced to a Gumbel-max operation. Although this operation itself remains non-differentiable, we can modify it by replacing the max operation with a softmax, as shown in Line 7, which is also utilized in discrete VAE (Jang et al., 2016). This modification results in a new variable, $\bar{x}_t \sim [0,1]^N$, which maintains differentiability with respect to $\theta$. As the temperature $\tau$ approaches zero, $\bar{x}_t$ converges to a sample from the exact categorical distribution $\text{Cat}(\pi_t)$, effectively becoming $x_t$. Thus, we typically set the temperature to a low value to closely approximate the true distribution.
+
+**Stage 2: Optimization (Step 10-11)** After approximately sampling from the distribution induced by $P^{\theta_s}$, we update the parameter $\theta_s$ by maximizing the empirical objective. Although $x_t$ itself may not have a valid gradient, $\bar{x}_t$ retains the gradient with respect to $\theta$. Therefore, we use the empirical approximation based on $\bar{x}_t$. We offer several remarks below, with details in Appendix E:
+
+- **Validity of $\bar{x}_t$:** While $\bar{x}_t$ does not strictly belong to $\mathcal{X}$, this is practically acceptable since the generator $Q^\theta(t)$ is parameterized as a map $\mathbb{R}^N \times \mathbb{R}^N \to \mathbb{R}$.
+- **SGD Variants:** Although Line 11 uses the standard SGD update, any off-the-shelf SGD algorithm, such as Adam (Kingma, 2014), can be applied in practice.
+- **Soft Calculation with $\bar{x}_t$:** Transition probability $\pi(t)_y$ and the KL divergence term in $g(\theta)$ are modified to their soft counterparts by using $\bar{x}_t$ in place of $x_t$.
+- **Straight-Through Gumbel Softmax:** Non-relaxed computations can be used in the forward pass (in Line 10). This is commonly known as straight-through Gumbel softmax estimator.
+- **Truncated Backpropagation:** In practice, it is often more effective to backpropagate from intermediate time steps rather than starting from $t = 0$. In practice, we adopted this truncation approach, as in Clark et al. (2023).
+- **Optimization Objective $g(\theta)$:** For the masked diffusion models (3) that we utilized, $g(\theta)$ can be further simplified to reduce computational complexity, as detailed in Appendix E.2.
+
+---
+
+## Supporting Context for Interpreting Section 4.2
+
+### Algorithm 1 (Pseudocode)
+
+The algorithm iterates over $S$ steps. At each step, for each sample $i$ in a batch of size $B$:
+
+1. For each time step $t \in [0, \Delta t, \ldots, T]$, compute the transition distribution $\pi(t)$ from the current soft state $\bar{x}_{t-1}$ and generator $Q^{\theta_s}$.
+2. Apply the **Gumbel-Softmax trick**: sample Gumbel noise $G_k \sim \text{Gumbel}(0,1)$ and compute:
+
+$$
+\bar{x}_t^{(i)} \leftarrow \left[\frac{\exp((\pi(t)_1 + G_1)/\tau)}{\sum_y \exp((\pi(t)_y + G_y)/\tau)}, \ldots, \frac{\exp((\pi(t)_N + G_N)/\tau)}{\sum_y \exp((\pi(t)_y + G_y)/\tau)}\right]
+$$
+
+3. Compute the loss:
+
+$$
+g(\theta_s) = \frac{1}{B} \sum_{i=1}^{B} \left[ r(\bar{x}_T^{(i)}) - \frac{\alpha}{T} \sum_{t=1}^{T} \sum_{x \in \mathcal{X}} [\bar{x}_{t-1}^{(i)}]_x \sum_{\substack{y \in \mathcal{X} \\ y \neq x}} \left( -Q^{\theta_s}_{x,y}(t) + Q^{\theta^{\text{pre}}}_{x,y}(t) + Q^{\theta_s}_{x,y}(t) \log \frac{Q^{\theta_s}_{x,y}(t)}{Q^{\theta^{\text{pre}}}_{x,y}(t)} \right) \right]
+$$
+
+4. Update: $\theta_{s+1} \leftarrow \theta_s + \beta \nabla_\theta g(\theta)\big|_{\theta = \theta_s}$.
+
+### Why Gumbel-Softmax is Necessary
+
+In discrete diffusion, trajectories are sequences of categorical samples from a CTMC. Sampling from $\text{Cat}(\pi_t)$ via $\arg\max$ (Gumbel-max trick) is non-differentiable — gradients cannot flow back through discrete sampling steps. The Gumbel-Softmax relaxation replaces $\arg\max$ with a temperature-controlled softmax, producing a continuous approximation $\bar{x}_t \in [0,1]^N$ (on the simplex) that is differentiable w.r.t. the generator parameters $\theta$. As $\tau \to 0$, this recovers exact categorical samples.
+
+### Straight-Through Estimator
+
+At the final time step $T$, the authors apply the **straight-through Gumbel-Softmax**: the forward pass uses the hard (one-hot) sample $x_T = \arg\max_x [\bar{x}_T]_x$ as input to the reward $r(\cdot)$, but the backward pass uses gradients from the soft $\bar{x}_T$. This is defined as $\text{ST}(x_T) := \bar{x}_T + \text{SG}(x_T - \bar{x}_T)$ where $\text{SG}$ denotes stop-gradient. This aligns the reward input with the oracle's training distribution (one-hot vectors) while maintaining gradient flow.
+
+### Truncated Backpropagation
+
+Rather than backpropagating through all $T$ diffusion steps (which is memory-intensive and can cause vanishing/exploding gradients), gradients are only propagated from a truncation point (e.g., step 50 out of 128 for DNA, step 25 out of 50 for protein). Steps before the truncation point are run with `stop_gradient`. This is analogous to truncated BPTT in RNNs.
+
+### Simplified KL for Masked Diffusion
+
+For masked diffusion models, the KL term simplifies considerably. When $x = \text{Mask}$, the generator values are independent of $\theta$, so the KL contribution is zero. When $x \neq \text{Mask}$, only the transition to $\text{Mask}$ is nonzero, so the KL reduces to:
+
+$$
+k^{(i)}(\theta) = \frac{\gamma}{T} \sum_{t=1}^{T} \sum_{\substack{x \in \mathcal{X} \\ x \neq \text{Mask}}} [\bar{x}_{t-1}^{(i)}]_x \left( -[\hat{x}_0^\theta]_x + [\hat{x}_0^{\theta^{\text{pre}}}]_x + [\hat{x}_0^\theta]_x \log \frac{[\hat{x}_0^\theta]_x}{[\hat{x}_0^{\theta^{\text{pre}}}]_x} \right)
+$$
+
+where $[\hat{x}_0^\theta]_x = \mathbb{E}_\theta[x_0 = x \mid x_{t-1} = \text{Mask}]$. This reduces computational complexity to $O(NT)$.
+
+### Connection to Classifier Guidance (Section 5.2)
+
+The theory shows that the optimal generator can alternatively be expressed as:
+
+$$
+Q^{\theta^\star}_{x,y}(t) = Q^{\theta^{\text{pre}}}_{x,y}(t) \exp\left(\frac{V_t(y) - V_t(x)}{\alpha}\right)
+$$
+
+where $V_t$ is the soft value function satisfying a Feynman–Kac formula. This recovers classifier guidance (Nisonoff et al., 2024) as a special case. While theoretically equivalent, DRAKES avoids the $O(NM)$ per-step cost of recomputing value functions at inference time and sidesteps the Taylor approximation heuristic that classifier guidance requires (which lacks formal guarantees in discrete spaces).
+
+### Practical Hyperparameters from Experiments
+
+| Setting | DNA Enhancer Design | Protein Inverse Folding |
+|---|---|---|
+| Diffusion steps | 128 | 50 |
+| $\alpha$ (KL weight) | 0.001 | 0.0003 |
+| Truncation step | 50 | 25 |
+| Base Gumbel-Softmax $\tau$ | 1.0 | 0.5 |
+| Batch size | 128 | 128 |
+| Training steps/epochs | 1000 steps | 100 epochs |
+| Temperature schedule | Linear ($\tau \sim 1/t$) | Linear ($\tau \sim 1/t$) |
