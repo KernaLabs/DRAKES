@@ -1,11 +1,11 @@
 #!/bin/bash
 #
-# Pre-commit hook: reject files larger than 5MB to prevent
-# accidentally committing large data/model files.
+# Pre-commit hook: reject files larger than 50MB to avoid
+# triggering GitHub LFS requirements.
 #
 # To install: git config core.hooksPath .githooks
 
-MAX_SIZE=5242880  # 5MB in bytes
+MAX_SIZE=52428800  # 50MB in bytes
 ERRORS=0
 
 # Check staged files (excluding deletions)
@@ -13,14 +13,14 @@ while IFS= read -r file; do
     [ -z "$file" ] && continue
     size=$(stat --format="%s" "$file" 2>/dev/null || stat -f "%z" "$file" 2>/dev/null)
     if [ -n "$size" ] && [ "$size" -gt "$MAX_SIZE" ]; then
-        echo "ERROR: $file is $(numfmt --to=iec "$size" 2>/dev/null || echo "${size} bytes") (max 5MB)"
+        echo "ERROR: $file is $(numfmt --to=iec "$size" 2>/dev/null || echo "${size} bytes") (max 50MB)"
         ERRORS=$((ERRORS + 1))
     fi
 done < <(git diff --cached --name-only --diff-filter=d)
 
 if [ "$ERRORS" -gt 0 ]; then
     echo ""
-    echo "Commit blocked: $ERRORS file(s) exceed the 5MB limit."
+    echo "Commit blocked: $ERRORS file(s) exceed the 50MB limit."
     echo "Add large files to .gitignore or use git-lfs."
     exit 1
 fi

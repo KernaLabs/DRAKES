@@ -142,7 +142,7 @@ Download data and pretrained weights from Dropbox (see README.md) and set `BASE_
 
 ## Git Hooks
 
-A pre-commit hook prevents committing files larger than 5MB. To install:
+A pre-commit hook prevents committing files larger than 50MB (GitHub's LFS threshold). To install:
 ```bash
 git config core.hooksPath .githooks
 ```
