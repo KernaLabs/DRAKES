@@ -6,7 +6,7 @@ import utils
 import numpy as np
 import os
 
-base_path = '/data/scratch/wangchy/seqft/'
+base_path = '/mnt/ssd1/code/DRAKES/DRAKES_data/data_and_model/'
 LOGGER = utils.get_logger(__name__)
 DNA_ALPHABET = {'A': 0, 'C': 1, 'G': 2, 'T': 3} #, 'M': 4}
 INDEX_TO_DNA = {v: k for k, v in DNA_ALPHABET.items()}

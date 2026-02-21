@@ -1,0 +1,12 @@
+python finetune_reward_bp_improved.py \
+        --checkpoint_path "/mnt/ssd1/code/mdlm/ginkgo_3utr_experiments/checkpoints/last.ckpt" \
+        --learning_rate 1e-4 \
+        --num_epochs 13 \
+        --batch_size 4 \
+        --alpha 0.001 \
+        --truncate_steps 10 \
+        --name "random_test" \
+        --save_every_n_epochs 1 \
+        --base_path "/tmp/test_finetune" \
+        --total_num_steps 32 \
+        --num_accum_steps 2

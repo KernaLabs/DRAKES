@@ -1,0 +1,143 @@
+# configs/exp/ncbi_hm_dna.yaml  (example name)
+
+
+defaults:
+  - /callbacks: [checkpoint_every_n_steps, checkpoint_monitor, learning_rate_monitor]
+  - /model: tiny
+  - /strategy: ddp
+  - /noise: loglinear
+  - /lr_scheduler: cosine_decay_warmup
+  - _self_
+  
+
+seed: 23
+mode: train            # {train | sample_eval | ppl_eval}
+diffusion: absorbing_state
+
+data:
+  train: ginkgo_3utr       # triggers the csv branch you just patched
+  valid: same_as_train  # Use same data for validation as training
+  wrap: true
+  streaming: false
+  cache_dir: /mnt/ssd1/code/mdlm/cache_dir
+  tokenizer_name_or_path: char_tokenizer  # Use the existing DNA tokenizer
+
+loader:
+  batch_size: 32
+  eval_batch_size: 32
+  global_batch_size: 32       # = bsz * gpus * nodes * grad_acc = 64 * 2 * 1 * 1
+  eval_global_batch_size: 32
+  num_workers: 1               # Use multiple workers for faster loading
+  pin_memory: true
+
+# Model configuration (use tiny defaults, only override length for DNA)
+model:
+  length: 181  # Increased from 1024 to accommodate longer DNA sequences (max 1143 chars)
+
+backbone: dit                # or dit / ar – whatever you want
+T: 0                           # continuous‑time SUBS (for DNA this is fine)
+parameterization: subs
+time_conditioning: True
+subs_masking: False
+
+sampling:
+  # mode: infill
+  # prefix: ""
+  # suffix: ""
+  # hole_length: 50
+
+  predictor: ddpm  # analytic, ddpm, ddpm_cache
+  steps: 128
+  noise_removal: True
+  num_sample_batches: 2  
+  num_sample_log: 2
+  semi_ar: False
+  stride_length: 1
+  num_strides: 1
+
+training:
+  ema: 0.9999
+  antithetic_sampling: True
+  importance_sampling: False
+  sampling_eps: 1e-5
+  change_of_variables: False
+
+eval:
+  checkpoint_path: 'ginkgo_3utr_checkpoints'
+  disable_ema: False
+  compute_generative_perplexity: false
+  perplexity_batch_size: 8
+  compute_perplexity_on_sanity: False
+  gen_ppl_eval_model_name_or_path: gpt2-large
+  generate_samples: true
+
+optim:
+  weight_decay: 1e-3
+  lr: 3e-4
+  beta1: 0.9
+  beta2: 0.999
+  eps: 1e-8
+
+# -- shorten training for the first run --
+trainer:
+  _target_: lightning.Trainer
+  accelerator: cuda
+  num_nodes: 1
+  devices: 2
+  accumulate_grad_batches: 1
+  gradient_clip_val: 1.0
+  precision: 'bf16'
+  num_sanity_val_steps: 0  # Disable validation sanity checks
+  max_steps: 50000
+  log_every_n_steps: 1
+  limit_train_batches: 1.0   # train on full dataset, can be used to toggle quick run
+  limit_val_batches: 0.0    # disable validation since valid=same_as_train
+  val_check_interval: 2  # Check validation every 1000 steps (effectively disabled with same_as_train)
+# Disable wandb for testing
+wandb:
+  project: text-diffusion
+  notes: DNA training test
+  group: null
+  job_type: null
+  name: run_ginkgo_3utr_${model.name}_${trainer.max_steps}_streaming_${data.streaming}_lr_${optim.lr}
+  id: ${.name}_${seed}
+  tags:
+    - ${noise.type}
+    - ${data.train}
+    - ${data.valid}
+
+# Sequence monitoring during training
+sequence_monitoring_steps: 500 # Print decoded sequences every N training steps
+
+checkpointing:
+  # ============================================================================
+  # CHECKPOINT CONFIGURATION
+  # ============================================================================
+  # 
+  # Control where checkpoints are saved:
+  # - Change this path to save checkpoints in a different directory
+  # - Examples:
+  #   save_dir: /home/kerna/mdlm/ginkgo_experiments          # Custom experiment directory
+  #   save_dir: /mnt/ssd1/checkpoints/ginkgo                 # SSD for faster I/O
+  #   save_dir: /home/kerna/mdlm/checkpoints/ginkgo_${seed}  # Per-seed directories
+  #   save_dir: /home/kerna/mdlm/checkpoints/ginkgo_${now:%Y%m%d_%H%M%S}  # Timestamped
+  save_dir: /mnt/ssd1/code/mdlm/ginkgo_3utr_experiments
+  
+  # Resume training from a checkpoint:
+  # - Set to true to resume from the specified checkpoint
+  # - The checkpoint path will be: ${save_dir}/checkpoints/last.ckpt
+  resume_from_ckpt: false
+  resume_ckpt_path: ${.save_dir}/checkpoints/last.ckpt
+  
+  # ============================================================================
+  # EXAMPLE CONFIGURATIONS
+  # ============================================================================
+  # 
+  # Example 1: Save to SSD with timestamped directories
+  # save_dir: /mnt/ssd1/checkpoints/ginkgo_${now:%Y%m%d_%H%M%S}
+  # 
+  # Example 2: Save to per-seed directories
+  # save_dir: /home/kerna/mdlm/checkpoints/ginkgo_seed_${seed}
+  # 
+  # Example 3: Save to experiment-specific directory
+  # save_dir: /home/kerna/mdlm/experiments/ginkgo_${model.name}_lr${optim.lr}

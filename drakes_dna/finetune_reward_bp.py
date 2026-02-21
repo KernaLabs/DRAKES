@@ -123,7 +123,7 @@ def fine_tune(new_model,  new_model_y, new_model_y_eval, old_model, args, eps=1e
     return batch_losses
 
 argparser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-argparser.add_argument('--base_path', type=str, default='/data/scratch/wangchy/seqft/')
+argparser.add_argument('--base_path', type=str, default='/mnt/ssd1/code/DRAKES/DRAKES_data/data_and_model/')
 argparser.add_argument('--learning_rate', type=float, default=1e-4)
 argparser.add_argument('--num_epochs', type=int, default=1000)
 argparser.add_argument('--num_accum_steps', type=int, default=4)
