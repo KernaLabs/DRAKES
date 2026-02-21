@@ -1,0 +1,12 @@
+name: dimamba_large
+type: dimamba
+hidden_size: 768
+cond_dim: 256
+n_blocks: 16
+length: 197
+scale_by_sigma: True
+dropout: 0.0
+tie_word_embeddings: False
+bidirectional: True
+bidirectional_strategy: add
+bidirectional_weight_tie: True

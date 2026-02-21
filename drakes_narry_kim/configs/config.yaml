@@ -1,0 +1,120 @@
+# =============================================================================
+# DRAKES Narry Kim 3'UTR Diffusion Model Configuration
+# =============================================================================
+#
+# Absorbing-state discrete diffusion model for viral 3'UTR sequences.
+# Dataset: ~196k viral tile sequences (197bp) from viral_tiles_struct.jsonl.gz
+# Backbone: DiT (Diffusion Transformer)
+# Vocab: {A=0, C=1, G=2, T=3, MASK=4}
+#
+# Pretraining: python main.py
+# Fine-tuning:  python finetune_reward_bp.py --checkpoint_path <ckpt>
+# =============================================================================
+
+defaults:
+  - _self_
+  - /callbacks: [checkpoint_every_n_steps, checkpoint_monitor, learning_rate_monitor]
+  - /model: dnaconv
+  - /strategy: ddp
+  - /noise: loglinear
+  - /lr_scheduler: constant_warmup
+
+mode: train
+diffusion: absorbing_state
+backbone: cnn
+parameterization: subs
+time_conditioning: False
+T: 0  # continuous time
+subs_masking: False
+debug_mode: False
+
+seed: 42
+
+data:
+  streaming: False
+
+loader:
+  global_batch_size: 256
+  eval_global_batch_size: ${.global_batch_size}
+  batch_size: ${div_up:${.global_batch_size}, ${eval:${trainer.devices} * ${trainer.num_nodes}}}
+  eval_batch_size: ${div_up:${.eval_global_batch_size}, ${eval:${trainer.devices} * ${trainer.num_nodes}}}
+  num_workers: 4
+  pin_memory: True
+
+model:
+  length: 197  # All narry_kim viral tile sequences are exactly 197bp
+
+sampling:
+  predictor: ddpm
+  steps: 128
+  noise_removal: True
+  num_sample_batches: 2
+  num_sample_log: 2
+  semi_ar: False
+  stride_length: 1
+  num_strides: 1
+
+training:
+  ema: 0.9999
+  antithetic_sampling: True
+  importance_sampling: False
+  sampling_eps: 1e-3
+  change_of_variables: False
+
+eval:
+  checkpoint_path: ''
+  disable_ema: False
+  compute_generative_perplexity: False
+  perplexity_batch_size: 8
+  compute_perplexity_on_sanity: False
+  gen_ppl_eval_model_name_or_path: gpt2-large
+  generate_samples: True
+  subset_size: 5000
+
+optim:
+  weight_decay: 0
+  lr: 3e-4
+  beta1: 0.9
+  beta2: 0.999
+  eps: 1e-8
+
+trainer:
+  _target_: lightning.Trainer
+  accelerator: cuda
+  num_nodes: 1
+  devices: ${device_count:}
+  accumulate_grad_batches: ${div_up:${loader.global_batch_size}, ${eval:${trainer.devices} * ${loader.batch_size} * ${trainer.num_nodes}}}
+  gradient_clip_val: 1.0
+  precision: 'bf16'
+  num_sanity_val_steps: 2
+  max_steps: 131500  # Match DNA model's training duration
+  log_every_n_steps: 10
+  limit_train_batches: 1.0
+  limit_val_batches: 1.0
+  val_check_interval: 690
+
+wandb:
+  project: narry-kim-3utr
+  notes: "3'UTR viral tile diffusion model (DiT backbone, 197bp sequences)"
+  group: null
+  job_type: null
+  name: null
+  id: ${uuid:}
+  tags:
+    - ${noise.type}
+
+hydra:
+  run:
+    dir: /mnt/ssd1/code/DRAKES/drakes_narry_kim/outputs/${now:%Y.%m.%d}/${now:%H%M%S}
+  job:
+    chdir: true
+
+checkpointing:
+  save_dir: /mnt/ssd1/code/DRAKES/drakes_narry_kim/experiments
+  resume_from_ckpt: true
+  resume_ckpt_path: ${.save_dir}/checkpoints/last.ckpt
+
+# Fine-tuning hyperparameters (used by finetune_reward_bp.py)
+finetuning:
+  gumbel_softmax_temp: 1.0
+  truncate_steps: 50
