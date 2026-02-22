@@ -5,8 +5,7 @@ import math
 import utils
 import numpy as np
 import os
-
-base_path = '/mnt/ssd1/code/DRAKES/DRAKES_data/data_and_model/'
+import drakes_paths as dp
 LOGGER = utils.get_logger(__name__)
 DNA_ALPHABET = {'A': 0, 'C': 1, 'G': 2, 'T': 3} #, 'M': 4}
 INDEX_TO_DNA = {v: k for k, v in DNA_ALPHABET.items()}
@@ -38,7 +37,7 @@ def batch_dna_tokenize(batch_seq):
 
 class GosaiDataset(torch.utils.data.Dataset):
     def __init__(self):
-        data_df = pd.read_csv(os.path.join(base_path, f'mdlm/gosai_data/processed_data/gosai_all.csv'))
+        data_df = pd.read_csv(str(dp.dna.gosai_csv))
         self.seqs = torch.tensor(data_df['seq'].apply(lambda x: [DNA_ALPHABET[c] for c in x]).tolist())
         self.clss = torch.tensor(data_df[['hepg2', 'k562', 'sknsh']].to_numpy())
         LOGGER.info(f'Loaded data: seqs shape: {self.seqs.shape}, clss shape: {self.clss.shape}')

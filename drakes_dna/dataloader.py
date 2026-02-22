@@ -17,6 +17,7 @@ import torch
 import transformers
 
 import utils
+import drakes_paths as dp
 
 LOGGER = utils.get_logger(__name__)
 
@@ -332,7 +333,7 @@ def get_dataset(
       cache_dir=cache_dir)
   elif dataset_name == 'ginkgo':
     features = datasets.Features({'full_sequence': datasets.Value('string')})
-    raw_ds = datasets.load_dataset('csv', data_files = '/mnt/ssd1/code/kerna-ssm/full_ginkgo.csv', features=features, cache_dir=cache_dir, split='train')
+    raw_ds = datasets.load_dataset('csv', data_files=str(dp.storage_root / 'dna' / 'data' / 'full_ginkgo.csv'), features=features, cache_dir=cache_dir, split='train')
     split_cache = os.path.join(cache_dir, 'ginkgo_split')
     if utils.fsspec_exists(split_cache):
       dataset_dict = datasets.load_from_disk(split_cache)
@@ -353,7 +354,7 @@ def get_dataset(
     print("[DEBUG] dataset, ", dataset)
   elif dataset_name == 'ginkgo_3utr':
     features = datasets.Features({'Sequence 3 UTR': datasets.Value('string')})
-    raw_ds = datasets.load_dataset('csv', data_files = '/mnt/ssd1/code/kerna-ssm/Ginkgo_pseudoU_3UTR_Dataset.csv', features=features, cache_dir=cache_dir, split='train')
+    raw_ds = datasets.load_dataset('csv', data_files=str(dp.dna.ginkgo_pseudou_csv), features=features, cache_dir=cache_dir, split='train')
     split_cache = os.path.join(cache_dir, 'ginkgo_3utr_split')
     if utils.fsspec_exists(split_cache):
       dataset_dict = datasets.load_from_disk(split_cache)
@@ -375,7 +376,7 @@ def get_dataset(
 
   elif dataset_name == 'ginkgo_utr':
     features = datasets.Features({'full_sequence': datasets.Value('string')})
-    raw_ds = datasets.load_dataset('csv', data_files = '/mnt/ssd1/code/kerna-ssm/full_ginkgo_w_spacer.csv', features=features, cache_dir=cache_dir, split='train')
+    raw_ds = datasets.load_dataset('csv', data_files=str(dp.storage_root / 'dna' / 'data' / 'full_ginkgo_w_spacer.csv'), features=features, cache_dir=cache_dir, split='train')
     split_cache = os.path.join(cache_dir, 'ginkgo_utr_split')
     if utils.fsspec_exists(split_cache):
       dataset_dict = datasets.load_from_disk(split_cache)
@@ -401,7 +402,7 @@ def get_dataset(
     features = datasets.Features({'seq': datasets.Value('string')})
     raw_ds = datasets.load_dataset(
       'csv',
-      data_files='/mnt/ssd2/arc_data/ncbi_cds_euk_w_hm.csv',
+      data_files=str(dp.dna.ncbi_cds_csv),
       features=features,
       cache_dir=cache_dir,
       split='train')

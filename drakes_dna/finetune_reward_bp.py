@@ -8,6 +8,7 @@ from scipy.stats import pearsonr
 import torch
 import torch.nn.functional as F
 import argparse
+import drakes_paths as dp
 import wandb
 import os
 import datetime
@@ -123,7 +124,7 @@ def fine_tune(new_model,  new_model_y, new_model_y_eval, old_model, args, eps=1e
     return batch_losses
 
 argparser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-argparser.add_argument('--base_path', type=str, default='/mnt/ssd1/code/DRAKES/DRAKES_data/data_and_model/')
+argparser.add_argument('--base_path', type=str, default=None, help='(deprecated, uses drakes_paths)')
 argparser.add_argument('--learning_rate', type=float, default=1e-4)
 argparser.add_argument('--num_epochs', type=int, default=1000)
 argparser.add_argument('--num_accum_steps', type=int, default=4)
@@ -143,8 +144,8 @@ args = argparser.parse_args()
 print(args)
 
 # pretrained model path
-CKPT_PATH = os.path.join(args.base_path, 'mdlm/outputs_gosai/pretrained.ckpt')
-log_base_dir = os.path.join(args.base_path, 'mdlm/reward_bp_results_final')
+CKPT_PATH = str(dp.dna.pretrained_ckpt)
+log_base_dir = str(dp.dna.reward_bp_results)
 
 # reinitialize Hydra
 GlobalHydra.instance().clear()

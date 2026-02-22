@@ -4,9 +4,9 @@ import pandas as pd
 from grelu.lightning import LightningModel
 import grelu.data.dataset
 import os
+import drakes_paths as dp
 
-base_path = '/data/scratch/wangchy/seqft/'
-df = pd.read_csv(os.path.join(base_path, 'mdlm/gosai_data/dataset.csv.gz'), index_col=0) # (735156, 5)
+df = pd.read_csv(str(dp.dna.gosai_dataset_gz), index_col=0) # (735156, 5)
 chr_list_1 = [f'chr{i}' for i in range(1, 12)]
 chr_list_2 = [f'chr{i}' for i in range(12, 23)]
 index_1 = df[df['chrom'].isin(chr_list_1)].index.to_numpy()
@@ -25,7 +25,7 @@ train_params = {
     'batch_size': 512,
     'num_workers': 4,
     'devices': [0],
-    'save_dir': os.path.join(base_path, 'mdlm/outputs_gosai'),
+    'save_dir': str(dp.dna.outputs_dir),
     'optimizer': 'adam',
     'max_epochs': 10,
     'checkpoint': True,

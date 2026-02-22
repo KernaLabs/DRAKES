@@ -11,6 +11,7 @@ import wandb
 import os
 import datetime
 from utils import str2bool, set_seed
+import drakes_paths as dp
 
 
 class RandomRewardModel(torch.nn.Module):
@@ -200,7 +201,7 @@ def fine_tune(new_model, new_model_y, new_model_y_eval, old_model, args, eps=1e-
     return batch_losses
 
 argparser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-argparser.add_argument('--base_path', type=str, default='/mnt/ssd1/code/DRAKES/drakes_dna/')
+argparser.add_argument('--base_path', type=str, default=None, help='(deprecated, uses drakes_paths)')
 argparser.add_argument('--learning_rate', type=float, default=1e-4)
 argparser.add_argument('--num_epochs', type=int, default=10)  # Reduced for testing
 argparser.add_argument('--num_accum_steps', type=int, default=4)
@@ -226,11 +227,11 @@ print(args)
 if args.checkpoint_path is not None:
     CKPT_PATH = args.checkpoint_path
 else:
-    CKPT_PATH = '/mnt/ssd1/code/mdlm/ginkgo_3utr_experiments/checkpoints/last.ckpt'
+    CKPT_PATH = str(dp.dna.pretrained_ckpt)
 
 print(f"Using checkpoint: {CKPT_PATH}")
 
-log_base_dir = os.path.join(args.base_path, 'reward_bp_results_random')
+log_base_dir = str(dp.dna.reward_bp_results_random)
 
 # reinitialize Hydra
 GlobalHydra.instance().clear()
@@ -262,7 +263,7 @@ print("Loading models...")
 if not os.path.exists(CKPT_PATH):
     print(f"ERROR: Checkpoint not found at {CKPT_PATH}")
     print("Available checkpoints in ginkgo_3utr_experiments:")
-    ckpt_dir = "/mnt/ssd1/code/mdlm/ginkgo_3utr_experiments/checkpoints"
+    ckpt_dir = str(dp.dna.outputs_dir / 'ginkgo_3utr_experiments' / 'checkpoints')
     if os.path.exists(ckpt_dir):
         for f in os.listdir(ckpt_dir):
             if f.endswith('.ckpt'):

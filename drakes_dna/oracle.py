@@ -11,15 +11,14 @@ from typing import Callable, Union, List
 from scipy.linalg import sqrtm
 from scipy.stats import pearsonr
 import torch.nn.functional as F
-
-base_path = '/mnt/ssd1/code/DRAKES/DRAKES_data/data_and_model/'
+import drakes_paths as dp
 
 
 def get_gosai_oracle(mode='train'):
     if mode == 'train':
-        model_load = LightningModel.load_from_checkpoint(os.path.join(base_path, 'mdlm/outputs_gosai/lightning_logs/reward_oracle_ft.ckpt'), map_location='cuda')
+        model_load = LightningModel.load_from_checkpoint(str(dp.dna.reward_oracle_ft), map_location='cuda')
     elif mode == 'eval':
-        model_load = LightningModel.load_from_checkpoint(os.path.join(base_path, 'mdlm/outputs_gosai/lightning_logs/reward_oracle_eval.ckpt'), map_location='cuda')
+        model_load = LightningModel.load_from_checkpoint(str(dp.dna.reward_oracle_eval), map_location='cuda')
     else:
         raise ValueError
     model_load.train_params['logger'] = None
@@ -54,7 +53,7 @@ def cal_atac_pred(seqs, model=None):
     seqs: list of sequences (detokenized ACGT...)
     """
     if model is None:
-        model = LightningModel.load_from_checkpoint(os.path.join(base_path, 'mdlm/gosai_data/binary_atac_cell_lines.ckpt'), map_location='cuda')
+        model = LightningModel.load_from_checkpoint(str(dp.dna.atac_ckpt), map_location='cuda')
     df_seqs = pd.DataFrame(seqs, columns=['seq'])
     pred_dataset = grelu.data.dataset.DFSeqDataset(df_seqs)
     preds = model.predict_on_dataset(pred_dataset, devices=[0])
@@ -66,7 +65,7 @@ def cal_atac_pred_new(seqs, model=None):
     seqs: list of sequences (detokenized ACGT...)
     """
     if model is None:
-        model = LightningModel.load_from_checkpoint(os.path.join(base_path, 'mdlm/gosai_data/binary_atac_cell_lines.ckpt'), map_location='cuda')
+        model = LightningModel.load_from_checkpoint(str(dp.dna.atac_ckpt), map_location='cuda')
     model.eval()
     tokens = dataloader_gosai.batch_dna_tokenize(seqs)
     tokens = torch.tensor(tokens).long().cuda()

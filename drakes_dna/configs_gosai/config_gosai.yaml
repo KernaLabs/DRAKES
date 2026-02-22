@@ -90,7 +90,7 @@ wandb:
 
 hydra:
   run:
-    dir: /mnt/ssd1/code/DRAKES/DRAKES_data/data_and_model/mdlm/outputs_gosai/${now:%Y.%m.%d}/${now:%H%M%S}
+    dir: ${drakes_root:}/dna/outputs/hydra_runs/${now:%Y.%m.%d}/${now:%H%M%S}
   job:
     chdir: true
 

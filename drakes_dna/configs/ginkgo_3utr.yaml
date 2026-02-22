@@ -19,7 +19,7 @@ data:
   valid: same_as_train  # Use same data for validation as training
   wrap: true
   streaming: false
-  cache_dir: /mnt/ssd1/code/mdlm/cache_dir
+  cache_dir: ${drakes_root:}/dna/cache
   tokenizer_name_or_path: char_tokenizer  # Use the existing DNA tokenizer
 
 loader:
@@ -121,7 +121,7 @@ checkpointing:
   #   save_dir: /mnt/ssd1/checkpoints/ginkgo                 # SSD for faster I/O
   #   save_dir: /home/kerna/mdlm/checkpoints/ginkgo_${seed}  # Per-seed directories
   #   save_dir: /home/kerna/mdlm/checkpoints/ginkgo_${now:%Y%m%d_%H%M%S}  # Timestamped
-  save_dir: /mnt/ssd1/code/mdlm/ginkgo_3utr_experiments
+  save_dir: ${drakes_root:}/dna/outputs/ginkgo_3utr_experiments
   
   # Resume training from a checkpoint:
   # - Set to true to resume from the specified checkpoint
