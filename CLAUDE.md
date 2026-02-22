@@ -134,11 +134,31 @@ Uses Hydra for configuration management. Main config files:
 - `drakes_protein/multiflow/configs/` - Protein model configs
 - `drakes_narry_kim/configs/config.yaml` - 3'UTR training config
 
+## Path Configuration
+
+All large files (data, checkpoints, experiment outputs) live outside the repo under a
+single `storage_root` directory. The repo uses `drakes_paths.py` to resolve all paths.
+
+Setup on a new machine:
+1. `cp paths.yaml.example paths.yaml`
+2. Edit `paths.yaml` — set `storage_root` to your data drive
+3. `pip install -e .` (in each conda env)
+
+Override via environment variable: `DRAKES_STORAGE_ROOT=/opt/dlami/nvme/DRAKES`
+
+Storage layout under `storage_root`:
+- `dna/data/`, `dna/models/`, `dna/outputs/` - DNA module
+- `narry_kim/data/`, `narry_kim/models/`, `narry_kim/experiments*/`, `narry_kim/outputs/` - 3'UTR module
+- `protein/` - Protein module (data only, scripts not yet migrated)
+
+External code dependencies (configured in `paths.yaml`):
+- `narry_kim_models` - path to narry_kim_2025/models repo (provides RNABiMamba)
+- `kernafold` - path to kernafold repo (provides build_model)
+
 ## Data Requirements
 
-Download data and pretrained weights from Dropbox (see README.md) and set `BASE_PATH` appropriately. Key paths to configure:
-- `base_path` in `dataloader_gosai.py`, `oracle.py`, `finetune_reward_bp.py` (DNA)
-- `base_path` in `fmif/finetune_reward_bp.py`, `fmif/train_fmif.py`, `protein_oracle/train_oracle.py` (Protein)
+Download data and pretrained weights from Dropbox (see README.md) and place them
+in the appropriate subdirectories under your `storage_root`.
 
 ## Git Hooks
 
