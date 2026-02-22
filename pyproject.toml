@@ -1,0 +1,9 @@
+[project]
+name = "drakes"
+version = "0.1.0"
+description = "DRAKES: Fine-Tuning Discrete Diffusion Models via Reward Optimization"
+requires-python = ">=3.9"
+dependencies = ["pyyaml"]
+
+[tool.setuptools]
+py-modules = ["drakes_paths"]

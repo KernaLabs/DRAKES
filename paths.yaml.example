@@ -1,0 +1,28 @@
+# paths.yaml — Central path configuration for DRAKES
+#
+# All large files (data, checkpoints, experiment outputs) live under
+# storage_root on a high-capacity drive. The repo itself can live on
+# a smaller/faster drive.
+#
+# Setup on a new machine:
+#   1. Clone the repo to your code drive
+#   2. Copy paths.yaml.example to paths.yaml
+#   3. Set storage_root to your data drive
+#   4. Update external paths to where you cloned those repos
+#   5. Run: pip install -e .  (in each conda env that uses DRAKES)
+#
+# Override storage_root via env var: DRAKES_STORAGE_ROOT=/some/path
+
+storage_root: /mnt/md0/DRAKES
+
+# External code repositories (Python source imports, NOT data).
+# These are separate git repos that provide model classes at runtime.
+# Clone them on a new machine and update these paths.
+external:
+  # RNABiMamba regressor — provides the RNABiMamba class
+  # Repo: narry_kim_2025, needed for 3'UTR reward prediction
+  narry_kim_models: /mnt/ssd1/code/narry_kim_2025/models
+
+  # KernaFold differentiable Vienna RNA surrogate (optional)
+  # Repo: kernafold, needed only for fully differentiable reward
+  kernafold: /mnt/ssd1/code/kernafold

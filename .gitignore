@@ -4,6 +4,9 @@ data_and_model.zip
 DRAKES_data.zip
 DRAKES/
 
+# Machine-specific path config (paths.yaml.example is tracked)
+paths.yaml
+
 # Experiment outputs and checkpoints
 **/reward_bp_results*/
 **/experiments*/
