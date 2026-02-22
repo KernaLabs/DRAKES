@@ -23,22 +23,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# Import KernaFold and RNABiMamba via importlib to avoid model.py name clash
-import importlib.util
-
-def _import_from_path(module_name, file_path):
-    spec = importlib.util.spec_from_file_location(module_name, file_path)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
-
-_kernafold_module = _import_from_path(
-    'kernafold_model', '/mnt/ssd1/code/kernafold/model.py')
-build_kernafold = _kernafold_module.build_model
-
-_narry_kim_module = _import_from_path(
-    'narry_kim_model', '/mnt/ssd1/code/narry_kim_2025/models/model.py')
-RNABiMamba = _narry_kim_module.RNABiMamba
+import drakes_paths as dp
+build_kernafold = dp.import_kernafold_build()
+RNABiMamba = dp.import_rnabimamba()
 
 # Teacher scalar normalization divisors (matching ViennaRewardWrapper encoding)
 # Order: mfe_energy, centroid_energy, centroid_distance,
@@ -180,13 +167,8 @@ if __name__ == '__main__':
     # Quick gradient flow test
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     wrapper = KernaFoldRewardWrapper(
-        kernafold_checkpoint_path=(
-            '/mnt/ssd1/code/kernafold/runs/bpp_v5_continuous_full/'
-            'checkpoints/best.pt'),
-        regressor_checkpoint_dir=(
-            '/mnt/ssd1/code/narry_kim_2025/models/checkpoints/'
-            'mamba_rnet_ablation_single_linear_head_lr1e-04_d256_L8_'
-            'kfold5_genome'),
+        kernafold_checkpoint_path=str(dp.narry_kim.kernafold_ckpt),
+        regressor_checkpoint_dir=str(dp.narry_kim.regressor_ckpt_dir),
         device=device,
     )
 

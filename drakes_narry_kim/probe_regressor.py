@@ -43,26 +43,16 @@ omegaconf.OmegaConf.register_new_resolver('div_up', lambda x, y: (x + y - 1) // 
 # Must be after resolver registration
 import diffusion as diffusion_module
 
-# Add narry_kim_2025/models to path for importing RNABiMamba
-_NARRY_KIM_MODELS_DIR = '/mnt/ssd1/code/narry_kim_2025/models'
-if _NARRY_KIM_MODELS_DIR not in sys.path:
-    sys.path.insert(0, _NARRY_KIM_MODELS_DIR)
-from model import RNABiMamba
+import drakes_paths as dp
+RNABiMamba = dp.import_rnabimamba()
 
 # =============================================================================
 # Configuration
 # =============================================================================
 
-REGRESSOR_CKPT_DIR = (
-    '/mnt/ssd1/code/narry_kim_2025/models/checkpoints/'
-    'mamba_rnet_ablation_single_linear_head_lr1e-04_d256_L8_kfold5_genome'
-)
-PRETRAINED_CKPT = '/mnt/ssd1/code/DRAKES/drakes_narry_kim/experiments/checkpoints/best.ckpt'
-FINETUNED_CKPT = (
-    '/mnt/ssd1/code/DRAKES/drakes_narry_kim/reward_bp_results/'
-    'alpha0.001_accum4_bsz16_truncate50_temp1.0_clip1.0_3utr_drakes_prod_v3_20260209_135024/'
-    'model_499.ckpt'
-)
+REGRESSOR_CKPT_DIR = str(dp.narry_kim.regressor_ckpt_dir)
+PRETRAINED_CKPT = str(dp.narry_kim.experiments_dir / 'checkpoints' / 'best.ckpt')
+FINETUNED_CKPT = None  # Set to a specific run path when needed
 VIENNA_API_URL = 'http://localhost:8000/jobs/analyze'
 NUM_SEQS = 32
 NUM_STEPS = 128

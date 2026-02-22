@@ -7,13 +7,14 @@ import torch
 import numpy as np
 
 import utils
+import drakes_paths as dp
 
 LOGGER = utils.get_logger(__name__)
 DNA_ALPHABET = {'A': 0, 'C': 1, 'G': 2, 'T': 3}
 INDEX_TO_DNA = {v: k for k, v in DNA_ALPHABET.items()}
 lookup_array = np.array([INDEX_TO_DNA[i] for i in range(len(INDEX_TO_DNA))])
 
-DATA_PATH = '/mnt/ssd1/code/v1_unified/data/processed/viral_tiles_struct.jsonl.gz'
+DATA_PATH = str(dp.narry_kim.viral_tiles_data)
 
 
 def dna_detokenize(seq):

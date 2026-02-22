@@ -86,13 +86,12 @@ omegaconf.OmegaConf.register_new_resolver('cwd', os.getcwd)
 omegaconf.OmegaConf.register_new_resolver('device_count', torch.cuda.device_count)
 omegaconf.OmegaConf.register_new_resolver('eval', eval)
 omegaconf.OmegaConf.register_new_resolver('div_up', lambda x, y: (x + y - 1) // y)
+import drakes_paths as dp
+omegaconf.OmegaConf.register_new_resolver('drakes_root', lambda: str(dp.storage_root), use_cache=True)
 
 # Default paths
-_DEFAULT_REGRESSOR_CKPT = (
-    '/mnt/ssd1/code/narry_kim_2025/models/checkpoints/'
-    'mamba_rnet_ablation_single_linear_head_lr1e-04_d256_L8_kfold5_genome'
-)
-_DEFAULT_BASE_PATH = '/mnt/ssd1/code/DRAKES/drakes_narry_kim'
+_DEFAULT_REGRESSOR_CKPT = str(dp.narry_kim.regressor_ckpt_dir)
+_DEFAULT_BASE_PATH = str(dp.narry_kim.outputs_dir)
 
 
 def _generate_eval_sequences(model, num_seqs, num_steps, device):

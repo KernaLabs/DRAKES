@@ -105,12 +105,12 @@ wandb:
 
 hydra:
   run:
-    dir: /mnt/ssd1/code/DRAKES/drakes_narry_kim/outputs/${now:%Y.%m.%d}/${now:%H%M%S}
+    dir: ${drakes_root:}/narry_kim/outputs/hydra_runs/${now:%Y.%m.%d}/${now:%H%M%S}
   job:
     chdir: true
 
 checkpointing:
-  save_dir: /mnt/ssd1/code/DRAKES/drakes_narry_kim/experiments
+  save_dir: ${drakes_root:}/narry_kim/experiments
   resume_from_ckpt: true
   resume_ckpt_path: ${.save_dir}/checkpoints/last.ckpt
 

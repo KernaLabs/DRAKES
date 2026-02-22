@@ -58,7 +58,7 @@
 #   reward = wrapper(soft_onehot)  # [B] scalar (log2FC prediction)
 #
 # Dependencies:
-#   - RNABiMamba model from /mnt/ssd1/code/narry_kim_2025/models/
+#   - RNABiMamba model (imported via drakes_paths)
 #   - Vienna RNA API running at localhost:8000
 #   - requests library for HTTP calls
 # =============================================================================
@@ -72,12 +72,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# Add narry_kim_2025/models to path for importing RNABiMamba
-_NARRY_KIM_MODELS_DIR = '/mnt/ssd1/code/narry_kim_2025/models'
-if _NARRY_KIM_MODELS_DIR not in sys.path:
-    sys.path.insert(0, _NARRY_KIM_MODELS_DIR)
-
-from model import RNABiMamba
+import drakes_paths as dp
+RNABiMamba = dp.import_rnabimamba()
 
 # Mapping from DNA token indices to RNA nucleotides (T→U for Vienna RNA)
 _IDX_TO_RNA = {0: 'A', 1: 'C', 2: 'G', 3: 'U'}
@@ -371,10 +367,7 @@ def test_wrapper():
     import time
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    ckpt_dir = (
-        '/mnt/ssd1/code/narry_kim_2025/models/checkpoints/'
-        'mamba_rnet_ablation_single_linear_head_lr1e-04_d256_L8_kfold5_genome'
-    )
+    ckpt_dir = str(dp.narry_kim.regressor_ckpt_dir)
 
     print(f'Loading ViennaRewardWrapper on {device}...')
     wrapper = ViennaRewardWrapper(ckpt_dir, device=device)

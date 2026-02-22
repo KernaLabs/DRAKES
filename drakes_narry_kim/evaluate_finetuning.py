@@ -22,18 +22,14 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import numpy as np
 import pandas as pd
 import requests
+import drakes_paths as dp
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
-DESEQ_PATH = (
-    '/mnt/ssd1/code/narry_kim_2025/viral_mpra/processed_data/'
-    'results/deseq2_results_fixed.csv'
-)
-VIRAL_TILES_PATH = (
-    '/mnt/ssd1/code/v1_unified/data/processed/viral_tiles_struct.jsonl.gz'
-)
+DESEQ_PATH = str(dp.narry_kim.deseq_results)
+VIRAL_TILES_PATH = str(dp.narry_kim.viral_tiles_data)
 VIENNA_API_URL = 'http://localhost:8000/jobs/analyze'
 CNGG_PATTERN = re.compile(r'C[ACGU]GG')
 LOOP_NAMES = {

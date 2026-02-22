@@ -23,11 +23,8 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 
-_NARRY_KIM_MODELS_DIR = '/mnt/ssd1/code/narry_kim_2025/models'
-if _NARRY_KIM_MODELS_DIR not in sys.path:
-    sys.path.insert(0, _NARRY_KIM_MODELS_DIR)
-
-from model import RNABiMamba
+import drakes_paths as dp
+RNABiMamba = dp.import_rnabimamba()
 
 
 class DistilledRewardWrapper(nn.Module):

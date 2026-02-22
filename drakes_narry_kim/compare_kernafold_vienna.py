@@ -27,13 +27,9 @@ def _import_from_path(module_name, file_path):
     spec.loader.exec_module(mod)
     return mod
 
-_kernafold_module = _import_from_path(
-    'kernafold_model', '/mnt/ssd1/code/kernafold/model.py')
-build_kernafold = _kernafold_module.build_model
-
-_narry_kim_module = _import_from_path(
-    'narry_kim_model', '/mnt/ssd1/code/narry_kim_2025/models/model.py')
-RNABiMamba = _narry_kim_module.RNABiMamba
+import drakes_paths as dp
+build_kernafold = dp.import_kernafold_build()
+RNABiMamba = dp.import_rnabimamba()
 
 # === Constants ===
 _IDX_TO_RNA = {0: 'A', 1: 'C', 2: 'G', 3: 'U'}
@@ -43,9 +39,9 @@ _SCALAR_NAMES = ['mfe_energy', 'centroid_energy', 'centroid_distance',
                  'ensemble_energy', 'mfe_frequency', 'ensemble_diversity']
 
 VIENNA_API_URL = 'http://localhost:8000/jobs/analyze'
-KERNAFOLD_CKPT = '/mnt/ssd1/code/kernafold/runs/bpp_v5_continuous_full/checkpoints/best.pt'
-TEACHER_DIR = '/mnt/ssd1/code/narry_kim_2025/models/checkpoints/mamba_rnet_ablation_single_linear_head_lr1e-04_d256_L8_kfold5_genome'
-DIFFUSION_CKPT = 'experiments/checkpoints/best.ckpt'
+KERNAFOLD_CKPT = str(dp.narry_kim.kernafold_ckpt)
+TEACHER_DIR = str(dp.narry_kim.regressor_ckpt_dir)
+DIFFUSION_CKPT = str(dp.narry_kim.experiments_dir / 'checkpoints' / 'best.ckpt')
 
 N_SEQUENCES = 64
 DEVICE = 'cuda'

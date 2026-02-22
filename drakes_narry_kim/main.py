@@ -55,6 +55,8 @@ omegaconf.OmegaConf.register_new_resolver('device_count', torch.cuda.device_coun
 omegaconf.OmegaConf.register_new_resolver('eval', eval)
 # div_up: ceiling division (used for batch size / accumulation calculations)
 omegaconf.OmegaConf.register_new_resolver('div_up', lambda x, y: (x + y - 1) // y)
+import drakes_paths as dp
+omegaconf.OmegaConf.register_new_resolver('drakes_root', lambda: str(dp.storage_root), use_cache=True)
 
 
 @L.pytorch.utilities.rank_zero_only

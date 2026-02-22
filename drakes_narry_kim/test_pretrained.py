@@ -28,13 +28,19 @@ for name, fn in [
     except:
         pass
 
+import drakes_paths as dp_paths
+try:
+    OmegaConf.register_new_resolver('drakes_root', lambda: str(dp_paths.storage_root))
+except:
+    pass
+
 GlobalHydra.instance().clear()
-with initialize_config_dir(config_dir='/mnt/ssd1/code/DRAKES/drakes_narry_kim/configs', version_base=None):
+with initialize_config_dir(config_dir=str(dp_paths.repo_root / 'drakes_narry_kim' / 'configs'), version_base=None):
     args = compose(config_name='config')
 
 import diffusion
 model = diffusion.Diffusion(args)
-ckpt = torch.load('experiments/checkpoints/best.ckpt', map_location='cpu', weights_only=False)
+ckpt = torch.load(str(dp_paths.narry_kim.experiments_dir / 'checkpoints' / 'best.ckpt'), map_location='cpu', weights_only=False)
 model.load_state_dict(ckpt['state_dict'])
 model.eval().cuda()
 print(f'Loaded best ckpt: epoch {ckpt["epoch"]}, step {ckpt["global_step"]}')

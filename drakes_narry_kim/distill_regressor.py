@@ -24,22 +24,14 @@ import torch.distributed as dist
 import torch.multiprocessing as mp
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-# Add teacher model path
-sys.path.insert(0, str(Path("/mnt/ssd1/code/narry_kim_2025/models")))
-from model import RNABiMamba
+import drakes_paths as _dp
+RNABiMamba = _dp.import_rnabimamba()
 
 # ── Paths ──────────────────────────────────────────────────────────────────
-TEACHER_DIR = Path(
-    "/mnt/ssd1/code/narry_kim_2025/models/checkpoints/"
-    "mamba_rnet_ablation_single_linear_head_lr1e-04_d256_L8_kfold5_genome"
-)
-DATA_FILE = Path(
-    "/mnt/ssd1/code/v1_unified/data/processed/viral_tiles_struct.jsonl.gz"
-)
-GENOME_SPLIT_DIR = Path(
-    "/mnt/ssd1/code/narry_kim_2025/models/data/rnet_genome_split_n1m_seed101"
-)
-OUT_DIR = Path("/mnt/ssd1/code/DRAKES/drakes_narry_kim/distilled_oracle")
+TEACHER_DIR = _dp.narry_kim.regressor_ckpt_dir
+DATA_FILE = _dp.narry_kim.viral_tiles_data
+GENOME_SPLIT_DIR = _dp.narry_kim.genome_split_dir
+OUT_DIR = _dp.narry_kim.distilled_oracle
 
 # ── Teacher config ─────────────────────────────────────────────────────────
 TEACHER_D_INPUT = 16
